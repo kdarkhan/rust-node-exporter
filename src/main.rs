@@ -3,16 +3,17 @@ mod helper;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::time::Instant;
 
 fn main() {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
     for stream in listener.incoming() {
-        let stream = stream.unwrap();
-        handle_connection(stream);
-
-        println!("Connection established!");
+        if let Ok(stream) = stream {
+            let now = Instant::now();
+            handle_connection(stream);
+            println!("Responded in {} ms", now.elapsed().as_millis());
+        }
     }
-    println!("Hello, world!");
 }
 
 fn handle_connection(mut stream: TcpStream) {
