@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate lazy_static;
 mod helper;
 
 use std::io::prelude::*;
@@ -21,12 +23,13 @@ fn handle_connection(mut stream: TcpStream) {
 
     stream.read(&mut buffer).unwrap();
 
-    let contents = helper::get_response_string();
+    let mut result = helper::get_aio_metrics();
+    result.push_str(&helper::get_lm_sensor_metric());
 
     let response = format!(
         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
-        contents.len(),
-        contents
+        result.len(),
+        result
     );
 
     stream.write(response.as_bytes()).unwrap();
