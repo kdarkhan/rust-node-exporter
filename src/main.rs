@@ -2,13 +2,18 @@
 extern crate lazy_static;
 mod helper;
 
+use std::env;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::time::Instant;
 
 fn main() {
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let args: Vec<String> = env::args().collect();
+
+    let port: i32 = args.get(1).and_then(|x| x.parse().ok()).unwrap_or(7878);
+
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
     for stream in listener.incoming() {
         if let Ok(stream) = stream {
             let now = Instant::now();
