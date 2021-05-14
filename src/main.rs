@@ -29,7 +29,8 @@ fn handle_connection(mut stream: TcpStream) {
     stream.read(&mut buffer).unwrap();
 
     let mut result = helper::get_aio_metrics();
-    result.push_str(&helper::get_lm_sensor_metric());
+    result.push_str(&helper::get_lm_sensor_metrics());
+    result.push_str(&helper::get_hddtemp_metrics());
 
     let response = format!(
         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
