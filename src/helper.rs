@@ -1,10 +1,12 @@
 use regex::Regex;
+use serde_json::Value;
 use std::process::Command;
 use std::str;
 
 pub fn get_aio_metrics() -> String {
     lazy_static! {
-        static ref LIQUID_TEMP_PATTERN: Regex = Regex::new(r"Liquid temperature\s+([0-9.]+)\s+°C$").unwrap();
+        static ref LIQUID_TEMP_PATTERN: Regex =
+            Regex::new(r"Liquid temperature\s+([0-9.]+)\s+°C$").unwrap();
         static ref FAN_SPEED_PATTERN: Regex = Regex::new(r"Fan speed\s+([0-9]+)\s+rpm$").unwrap();
         static ref PUMP_SPEED_PATTERN: Regex = Regex::new(r"Pump speed\s+([0-9]+)\s+rpm$").unwrap();
     }
@@ -42,49 +44,48 @@ pub fn get_aio_metrics() -> String {
 }
 
 pub fn get_lm_sensor_metric() -> String {
-
-    lazy_static! {
-        static ref TCTL_PATTERN: Regex = Regex::new(r"Tctl:\s+([0-9.+-]+)°C\s*$").unwrap();
-        static ref TDIE_PATTERN: Regex = Regex::new(r"Tdie:\s+([0-9.+-]+)°C\s*$").unwrap();
-        static ref CORE_VOLTAGE_PATTERN: Regex = Regex::new(r"CPU Core Voltage:\s+([0-9.]+)\s*V\s*$").unwrap();
-        static ref CPU_TEMP_PATTERN: Regex = Regex::new(r"CPU Temperature:\s+([0-9.+-]+)°C\s*$").unwrap();
-        static ref MB_TEMP_PATTERN: Regex = Regex::new(r"Motherboard Temperature:\s+([0-9.+-]+)°C\s*$").unwrap();
-        static ref CHIPSET_TEMP_PATTERN: Regex = Regex::new(r"Chipset Temperature:\s+([0-9.+-]+)°C\s*$").unwrap();
-        static ref CPU_FAN_PATTERN: Regex = Regex::new(r"CPU Fan:\s+([0-9]+) RPM\s*$").unwrap();
-        static ref CHASSIS_FAN_PATTERN: Regex = Regex::new(r"Chassis Fan 2:\s+([0-9]+) RPM\s*$").unwrap();
-    }
-
-    let mut tctl = String::new();
-    let mut tdie = String::new();
-    let mut core_voltage = String::new();
-    let mut cpu_temp = String::new();
-    let mut mb_temp = String::new();
-    let mut chipset_temp = String::new();
-    let mut cpu_fan = String::new();
-    let mut chassis_fan = String::new();
-
-    match Command::new("sensors").output() {
+    match Command::new("sensors").arg("-j").output() {
         Ok(output) => match str::from_utf8(&output.stdout) {
             Ok(out) => {
-                for line in out.lines() {
-                    if let Some(m) = TCTL_PATTERN.captures(line) {
-                        tctl = m[1].to_string();
-                    } else if let Some(m) = TDIE_PATTERN.captures(line) {
-                        tdie = m[1].to_string();
-                    } else if let Some(m) = CORE_VOLTAGE_PATTERN.captures(line) {
-                        core_voltage = m[1].to_string();
-                    }  else if let Some(m) = CPU_TEMP_PATTERN.captures(line) {
-                        cpu_temp = m[1].to_string();
-                    } else if let Some(m) = MB_TEMP_PATTERN.captures(line) {
-                        mb_temp = m[1].to_string();
-                    } else if let Some(m) = CHIPSET_TEMP_PATTERN.captures(line) {
-                        chipset_temp = m[1].to_string();
-                    } else if let Some(m) = CPU_FAN_PATTERN.captures(line) {
-                        cpu_fan = m[1].to_string();
-                    } else if let Some(m) = CHASSIS_FAN_PATTERN.captures(line) {
-                        chassis_fan = m[1].to_string();
-                    }
-                }
+                let v: Value = serde_json::from_str(out).expect("sensors -j did not return json");
+                let tctl = v["k10temp-pci-00c3"]["Tctl"]["temp1_input"]
+                    .as_f64()
+                    .unwrap_or(0.0);
+                let tdie = v["k10temp-pci-00c3"]["Tdie"]["temp2_input"]
+                    .as_f64()
+                    .unwrap_or(0.0);
+
+                let core_voltage = v["asuswmisensors-isa-0000"]["CPU Core Voltage"]["in0_input"]
+                    .as_f64()
+                    .unwrap_or(0.0);
+                let cpu_temp = v["asuswmisensors-isa-0000"]["CPU Temperature"]["temp1_input"]
+                    .as_f64()
+                    .unwrap_or(0.0);
+                let mb_temp = v["asuswmisensors-isa-0000"]["Motherboard Temperature"]
+                    ["temp2_input"]
+                    .as_f64()
+                    .unwrap_or(0.0);
+                let chipset_temp = v["asuswmisensors-isa-0000"]["Chipset Temperature"]
+                    ["temp3_input"]
+                    .as_f64()
+                    .unwrap_or(0.0);
+                let cpu_fan = v["asuswmisensors-isa-0000"]["CPU Fan"]["fan1_input"]
+                    .as_f64()
+                    .unwrap_or(0.0);
+                let chassis_fan = v["asuswmisensors-isa-0000"]["Chassis Fan 2"]["fan3_input"]
+                    .as_f64()
+                    .unwrap_or(0.0);
+
+                let mut result = String::new();
+                result.push_str(&format!("\nlm_sensors_tctl {}", tctl));
+                result.push_str(&format!("\nlm_sensors_tdie {}", tdie));
+                result.push_str(&format!("\nlm_sensors_core_voltage {}", core_voltage));
+                result.push_str(&format!("\nlm_sensors_cpu_temp {}", cpu_temp));
+                result.push_str(&format!("\nlm_sensors_mb_temp {}", mb_temp));
+                result.push_str(&format!("\nlm_sensors_chipset_temp {}", chipset_temp));
+                result.push_str(&format!("\nlm_sensors_cpu_fan {}", cpu_fan));
+                result.push_str(&format!("\nlm_sensors_chassis_fan {}\n", chassis_fan));
+                return result;
             }
             Err(e) => {
                 eprintln!("error parsing stdout {}", e);
@@ -96,15 +97,4 @@ pub fn get_lm_sensor_metric() -> String {
             panic!()
         }
     }
-
-    let mut result = String::new();
-    result.push_str(&format!("\nlm_sensors_tctl {}", tctl));
-    result.push_str(&format!("\nlm_sensors_tdie {}", tdie));
-    result.push_str(&format!("\nlm_sensors_core_voltage {}", core_voltage));
-    result.push_str(&format!("\nlm_sensors_cpu_temp {}", cpu_temp));
-    result.push_str(&format!("\nlm_sensors_mb_temp {}", mb_temp));
-    result.push_str(&format!("\nlm_sensors_chipset_temp {}", chipset_temp));
-    result.push_str(&format!("\nlm_sensors_cpu_fan {}", cpu_fan));
-    result.push_str(&format!("\nlm_sensors_chassis_fan {}\n", chassis_fan));
-    result
 }
