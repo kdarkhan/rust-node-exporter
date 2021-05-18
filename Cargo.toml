@@ -10,4 +10,5 @@ edition = "2018"
 regex = "1"
 lazy_static = "1.4.0"
 serde_json = "1.0.59"
-xmltree = "0.10"
+serde = { version = "1.0", features = [ "derive" ] }
+quick-xml = { version = "0.22", features = [ "serialize" ] }

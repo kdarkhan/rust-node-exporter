@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
+extern crate quick_xml;
+extern crate serde;
 mod helper;
 
 use std::env;
