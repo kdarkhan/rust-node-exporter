@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use std::net::TcpStream;
 use std::process::Command;
 use std::str;
+use xmltree::Element;
 
 pub fn get_aio_metrics() -> String {
     lazy_static! {
@@ -102,12 +103,12 @@ pub fn get_lm_sensor_metrics() -> String {
                 return result;
             }
             Err(e) => {
-                eprintln!("error parsing stdout {}", e);
+                eprintln!("error parsing lm_sensors stdout {}", e);
                 panic!()
             }
         },
         Err(e) => {
-            eprintln!("error running sensors {}", e);
+            eprintln!("error running lm_sensors {}", e);
             panic!()
         }
     }
@@ -139,5 +140,84 @@ pub fn get_hddtemp_metrics() -> String {
         )
     } else {
         panic!("Could not parse hddtemp output")
+    }
+}
+
+fn get_text_at_path(e: &Element, args: &[&str]) -> String {
+    let mut x = e;
+    for p in args {
+        x = x.get_child(*p).unwrap();
+    }
+
+    x.get_text().unwrap().split_whitespace().next().unwrap().to_owned()
+}
+
+
+pub fn get_nvidia_metrics() -> String {
+    match Command::new("nvidia-smi").arg("-q").arg("-x").output() {
+        Ok(output) => match str::from_utf8(&output.stdout) {
+            Ok(out) => {
+                let parsed = Element::parse(out.as_bytes()).unwrap();
+                let gpu = parsed.get_child("gpu").unwrap();
+
+                let gpu_temp = get_text_at_path(gpu, &["temperature", "gpu_temp"]);
+                let power_draw = get_text_at_path(gpu, &["power_readings", "power_draw"]);
+
+                let clocks = gpu.get_child("clocks").unwrap();
+                let graphics_clock = get_text_at_path(clocks, &["graphics_clock"]);
+                let sm_clock = get_text_at_path(clocks, &["sm_clock"]);
+                let mem_clock = get_text_at_path(clocks, &["mem_clock"]);
+                let video_clock = get_text_at_path(clocks, &["video_clock"]);
+
+
+                let fan_speed = get_text_at_path(gpu, &["fan_speed"]);
+
+
+                let fb_memory = gpu.get_child("fb_memory_usage").unwrap();
+                let fb_memory_total = get_text_at_path(fb_memory, &["total"]);
+                let fb_memory_used = get_text_at_path(fb_memory, &["used"]);
+                let fb_memory_free = get_text_at_path(fb_memory, &["free"]);
+
+                let bar1_memory = gpu.get_child("bar1_memory_usage").unwrap();
+                let bar1_memory_total = get_text_at_path(bar1_memory, &["total"]);
+                let bar1_memory_used = get_text_at_path(bar1_memory, &["used"]);
+                let bar1_memory_free = get_text_at_path(bar1_memory, &["free"]);
+
+                let utilization = gpu.get_child("utilization").unwrap();
+                let utilization_gpu = get_text_at_path(utilization, &["gpu_util"]);
+                let utilization_mem = get_text_at_path(utilization, &["memory_util"]);
+                let utilization_enc = get_text_at_path(utilization, &["encoder_util"]);
+                let utilization_dec = get_text_at_path(utilization, &["decoder_util"]);
+
+
+                let mut result = String::new();
+                result.push_str(&format!("\nnvidia_temp {}", gpu_temp));
+                result.push_str(&format!("\nnvidia_power_draw {}", power_draw));
+                result.push_str(&format!("\nnvidia_graphics_clock {}", graphics_clock));
+                result.push_str(&format!("\nnvidia_sm_clock {}", sm_clock));
+                result.push_str(&format!("\nnvidia_mem_clock {}", mem_clock));
+                result.push_str(&format!("\nnvidia_video_clock {}", video_clock));
+                result.push_str(&format!("\nnvidia_fan_speed {}", fan_speed));
+                result.push_str(&format!("\nnvidia_fb_memory_total {}", fb_memory_total));
+                result.push_str(&format!("\nnvidia_fb_memory_free {}", fb_memory_free));
+                result.push_str(&format!("\nnvidia_fb_memory_used {}", fb_memory_used));
+                result.push_str(&format!("\nnvidia_bar1_memory_total {}", bar1_memory_total));
+                result.push_str(&format!("\nnvidia_bar1_memory_free {}", bar1_memory_free));
+                result.push_str(&format!("\nnvidia_bar1_memory_used {}", bar1_memory_used));
+                result.push_str(&format!("\nnvidia_utilization_gpu {}", utilization_gpu));
+                result.push_str(&format!("\nnvidia_utilization_mem {}", utilization_mem));
+                result.push_str(&format!("\nnvidia_utilization_enc {}", utilization_enc));
+                result.push_str(&format!("\nnvidia_utilization_dec {}", utilization_dec));
+                result
+            }
+            Err(e) => {
+                eprintln!("error parsing nvidia-smi stdout {}", e);
+                panic!()
+            }
+        },
+        Err(e) => {
+            eprintln!("error running nvidia-smi {}", e);
+            panic!()
+        }
     }
 }

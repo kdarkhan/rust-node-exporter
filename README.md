@@ -7,5 +7,6 @@ Currently it exposes:
   [liquidctl](https://github.com/liquidctl/liquidctl).
 * `lm_sensors` output with `asus-wmi-sensors` driver.
 * SSD temps using `hddtemp`
+* Nvidia metrics using `nvidia-smi -q`
 
 ![Prometheus UI screenshot](prometheus-screenshot.png?raw=true)
