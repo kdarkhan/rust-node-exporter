@@ -2,7 +2,7 @@
 extern crate lazy_static;
 extern crate quick_xml;
 extern crate serde;
-mod helper;
+mod helpers;
 
 use std::env;
 use std::io::prelude::*;
@@ -30,10 +30,10 @@ fn handle_connection(mut stream: TcpStream) {
 
     stream.read(&mut buffer).unwrap();
 
-    let mut result = helper::get_aio_metrics();
-    result.push_str(&helper::get_lm_sensor_metrics());
-    result.push_str(&helper::get_hddtemp_metrics());
-    result.push_str(&helper::get_nvidia_metrics());
+    let mut result = helpers::nzxt_aio::get_aio_metrics();
+    result.push_str(&helpers::lm_sensors::get_lm_sensor_metrics());
+    result.push_str(&helpers::hddtemp::get_hddtemp_metrics());
+    result.push_str(&helpers::nvidia::get_nvidia_metrics());
 
     let response = format!(
         "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
