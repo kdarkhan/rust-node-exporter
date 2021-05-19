@@ -12,3 +12,4 @@ lazy_static = "1.4.0"
 serde_json = "1.0.59"
 serde = { version = "1.0", features = [ "derive", "alloc" ] }
 quick-xml = { version = "0.22", features = [ "serialize" ] }
+hidapi = "1.2.6"
