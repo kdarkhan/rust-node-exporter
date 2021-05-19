@@ -1,1 +1,3 @@
 target/
+rust-node-exporter-*.pkg.tar.xz
+pkg/

@@ -1,0 +1,9 @@
+[Unit]
+Description=Service for exporting my desktop metrics to prometheus
+
+[Service]
+Type=simple
+ExecStart=rust-node-exporter
+
+[Install]
+WantedBy=multi-user.target
