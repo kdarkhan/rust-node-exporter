@@ -17,6 +17,7 @@ use std::time::Instant;
 const EXPORTER_HDDTEMP: &str = "hddtemp";
 const EXPORTER_LM_SENSORS: &str = "lm_sensors";
 const EXPORTER_PROC_MEMINFO: &str = "proc_meminfo";
+const EXPORTER_PROC_NETDEV: &str = "proc_netdev";
 const EXPORTER_PROC_STAT: &str = "proc_stat";
 const EXPORTER_NVIDIA: &str = "nvidia";
 const EXPORTER_NZXT_AIO: &str = "nzxt_aio";
@@ -34,6 +35,7 @@ fn main() {
             EXPORTER_LM_SENSORS,
             EXPORTER_HDDTEMP,
             EXPORTER_PROC_MEMINFO,
+            EXPORTER_PROC_NETDEV,
             EXPORTER_PROC_STAT,
             EXPORTER_NZXT_AIO,
             EXPORTER_NVIDIA,
@@ -71,8 +73,8 @@ fn main() {
             result.push_str(&helpers::proc_stat::get_proc_stat());
         }
 
-        if exporters.contains(EXPORTER_PROC_STAT) {
-            result.push_str(&helpers::proc_stat::get_proc_stat());
+        if exporters.contains(EXPORTER_PROC_NETDEV) {
+            result.push_str(&helpers::proc_netdev::get_proc_netdev());
         }
 
         if exporters.contains(EXPORTER_PROC_MEMINFO) {
