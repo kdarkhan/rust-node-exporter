@@ -1,5 +1,5 @@
 name: rust-node-exporter
-version: "0.0"
+version: "0.1"
 author: Darkhan K. <darkhanu@gmail.com>
 about: Prometheus exporter for my desktop metrics
 args:
@@ -18,6 +18,7 @@ args:
         possible_values:
             - hddtemp
             - lm_sensors
+            - proc_meminfo
             - proc_stat
             - nvidia
             - nzxt_aio

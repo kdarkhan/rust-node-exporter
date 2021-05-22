@@ -7,5 +7,6 @@ Currently it exposes:
 * `lm_sensors` output with `asus-wmi-sensors` driver
 * SSD temps using `hddtemp` daemon
 * Nvidia metrics using `nvidia-smi -q`
+* /proc/meminfo and /proc/cpuinfo metrics
 
 ![Prometheus UI screenshot](prometheus-screenshot.png?raw=true)

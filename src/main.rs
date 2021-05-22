@@ -14,11 +14,12 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::time::Instant;
 
-const EXPORTER_NVIDIA: &str = "nvidia";
-const EXPORTER_NZXT_AIO: &str = "nzxt_aio";
-const EXPORTER_PROC_STAT: &str = "proc_stat";
 const EXPORTER_HDDTEMP: &str = "hddtemp";
 const EXPORTER_LM_SENSORS: &str = "lm_sensors";
+const EXPORTER_PROC_MEMINFO: &str = "proc_meminfo";
+const EXPORTER_PROC_STAT: &str = "proc_stat";
+const EXPORTER_NVIDIA: &str = "nvidia";
+const EXPORTER_NZXT_AIO: &str = "nzxt_aio";
 
 fn main() {
     let yaml = load_yaml!("cli.yml");
@@ -32,6 +33,7 @@ fn main() {
         [
             EXPORTER_LM_SENSORS,
             EXPORTER_HDDTEMP,
+            EXPORTER_PROC_MEMINFO,
             EXPORTER_PROC_STAT,
             EXPORTER_NZXT_AIO,
             EXPORTER_NVIDIA,
@@ -67,6 +69,14 @@ fn main() {
         }
         if exporters.contains(EXPORTER_PROC_STAT) {
             result.push_str(&helpers::proc_stat::get_proc_stat());
+        }
+
+        if exporters.contains(EXPORTER_PROC_STAT) {
+            result.push_str(&helpers::proc_stat::get_proc_stat());
+        }
+
+        if exporters.contains(EXPORTER_PROC_MEMINFO) {
+            result.push_str(&helpers::proc_meminfo::get_proc_memifo());
         }
 
         let response = format!(

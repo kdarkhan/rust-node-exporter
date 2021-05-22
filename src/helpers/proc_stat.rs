@@ -96,7 +96,7 @@ pub fn get_proc_stat() -> String {
             } else if let Some(m) = CTXT_PATTERN.captures(&line) {
                 result.push_str(&format!("procstat_ctxt {}\n", m[1].to_string()));
             } else if let Some(m) = BTIME_PATTERN.captures(&line) {
-                result.push_str(&format!("procstat_btime_sec {}\n", m[1].to_string()));
+                result.push_str(&format!("procstat_btime_seconds {}\n", m[1].to_string()));
             } else if let Some(m) = PROCESSES_PATTERN.captures(&line) {
                 result.push_str(&format!("procstat_processes {}\n", m[1].to_string()));
             } else if let Some(m) = PROCS_RUNNING_PATTERN.captures(&line) {
