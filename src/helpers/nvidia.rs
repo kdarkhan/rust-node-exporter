@@ -13,7 +13,7 @@ pub fn get_nvidia_metrics() -> String {
 
                 let mut result = String::new();
                 result.push_str(&format!(
-                    "\nnvidia_temp {}",
+                    "nvidia_temp {}",
                     get_first_word(&gpu.temperature.gpu_temp)
                 ));
                 result.push_str(&format!(
@@ -77,7 +77,7 @@ pub fn get_nvidia_metrics() -> String {
                     get_first_word(&gpu.utilization.encoder_util)
                 ));
                 result.push_str(&format!(
-                    "\nnvidia_utilization_dec {}",
+                    "\nnvidia_utilization_dec {}\n",
                     get_first_word(&gpu.utilization.decoder_util)
                 ));
                 result

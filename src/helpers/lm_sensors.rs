@@ -66,7 +66,7 @@ pub fn get_lm_sensor_metrics() -> String {
             let sens: Sensors = serde_json::from_slice(&output.stdout).unwrap();
 
             let mut result = String::new();
-            result.push_str(&format!("\nlm_sensors_tctl {}", sens.k10temp.tctl.value));
+            result.push_str(&format!("lm_sensors_tctl {}", sens.k10temp.tctl.value));
             result.push_str(&format!("\nlm_sensors_tdie {}", sens.k10temp.tdie.value));
             result.push_str(&format!(
                 "\nlm_sensors_cpu_temp {}",
@@ -101,7 +101,7 @@ pub fn get_lm_sensor_metrics() -> String {
                 sens.asus_wmi_sensors.plus_12_voltage.value
             ));
             result.push_str(&format!(
-                "\nlm_sensors_3vsb_voltage {}",
+                "\nlm_sensors_3vsb_voltage {}\n",
                 sens.asus_wmi_sensors.three_vsb_voltage.value
             ));
             return result;

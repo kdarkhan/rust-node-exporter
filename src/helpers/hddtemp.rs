@@ -22,7 +22,7 @@ pub fn get_hddtemp_metrics() -> String {
 
     if let Some(m) = HDDTEMP_PATTERN.captures(&res) {
         format!(
-            "\nhddtemp_crucial_mx500_temp {}\nhddtemp_samsung_860_evo_temp {}",
+            "hddtemp_crucial_mx500_temp {}\nhddtemp_samsung_860_evo_temp {}\n",
             m[1].to_string(),
             m[2].to_string()
         )
