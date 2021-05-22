@@ -1,108 +1,58 @@
-use regex::Regex;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 
-pub fn get_proc_stat() -> String {
-    lazy_static! {
-        static ref CPU_PATTERN: Regex = Regex::new(
-            r"^cpu(?P<cpu>\d*)?\s+(?P<user>\d+)\s+(?P<nice>\d+)\s+(?P<system>\d+)\s+(?P<idle>\d+)\s+(?P<iowait>\d+)\s+(?P<irq>\d+)\s+(?P<softirq>\d+)\s+(?P<steal>\d+)\s+(?P<guest>\d+)\s+(?P<guestnice>\d+)\s*$"
-        )
-        .unwrap();
-        static ref CTXT_PATTERN: Regex = Regex::new(
-            r"^ctxt\s+(\d+)\s*$"
-        )
-        .unwrap();
-        static ref BTIME_PATTERN: Regex = Regex::new(
-            r"^btime\s+(\d+)\s*$"
-        )
-        .unwrap();
-        static ref PROCESSES_PATTERN: Regex = Regex::new(
-            r"^processes\s+(\d+)\s*$"
-        )
-        .unwrap();
-        static ref PROCS_RUNNING_PATTERN: Regex = Regex::new(
-            r"^processes\s+(\d+)\s*$"
-        )
-        .unwrap();
-        static ref PROCS_BLOCKED_PATTERN: Regex = Regex::new(
-            r"^processes\s+(\d+)\s*$"
-        )
-        .unwrap();
-        static ref SOFTIRQ_PATTERN: Regex = Regex::new(
-            r"^softirq\s+(\d+)\s[\d.]+$"
-        )
-        .unwrap();
-    }
+lazy_static! {
+    static ref FIELD_MAP: HashMap<&'static str, &'static str> = {
+        let mut map = HashMap::new();
+        map.insert("ctxt", "procstat_ctxt");
+        map.insert("btime", "procstat_btime_seconds");
+        map.insert("processes", "procstat_processes");
+        map.insert("procs_running", "procstat_procs_running");
+        map.insert("procs_blocked", "procstat_procs_blocked");
+        map.insert("procs_softirq", "procstat_procs_blocked");
+        map
+    };
+    static ref CPU_FIELDS_MAP: &'static [&'static str] = &[
+        "user",
+        "nice",
+        "system",
+        "idle",
+        "iowait",
+        "irq",
+        "softirq",
+        "steal",
+        "guest",
+        "guestnice"
+    ];
+}
 
-    let file = File::open("/proc/stat").expect("cannot open file");
+pub fn get_proc_stat() -> String {
+    let file = File::open("/proc/stat").expect("cannot open /proc/stat");
     let lines = io::BufReader::new(file).lines();
 
     let mut result = String::new();
 
     for line in lines {
         if let Ok(line) = line {
-            if let Some(m) = CPU_PATTERN.captures(&line) {
+            let mut iter = line.split_ascii_whitespace();
+            let field_id = &iter.next().unwrap();
+            if line.starts_with("cpu") {
+                for (idx, item) in iter.enumerate() {
+                    if idx < 10 {
+                        result.push_str(&format!(
+                            "procstat_{}_{}_hz {}\n",
+                            field_id, CPU_FIELDS_MAP[idx], item
+                        ));
+                    }
+                }
+            } else if FIELD_MAP.contains_key(field_id) {
                 result.push_str(&format!(
-                    "cpu{}_user_hz {}\n",
-                    m["cpu"].to_string(),
-                    m["user"].to_string()
+                    "{} {}\n",
+                    FIELD_MAP[field_id],
+                    iter.next().unwrap()
                 ));
-                result.push_str(&format!(
-                    "cpu{}_nice_hz {}\n",
-                    m["cpu"].to_string(),
-                    m["nice"].to_string()
-                ));
-                result.push_str(&format!(
-                    "cpu{}_system_hz {}\n",
-                    m["cpu"].to_string(),
-                    m["system"].to_string()
-                ));
-                result.push_str(&format!(
-                    "cpu{}_idle_hz {}\n",
-                    m["cpu"].to_string(),
-                    m["idle"].to_string()
-                ));
-                result.push_str(&format!(
-                    "cpu{}_iowait_hz {}\n",
-                    m["cpu"].to_string(),
-                    m["iowait"].to_string()
-                ));
-                result.push_str(&format!(
-                    "cpu{}_irq_hz {}\n",
-                    m["cpu"].to_string(),
-                    m["irq"].to_string()
-                ));
-                result.push_str(&format!(
-                    "cpu{}_softirq_hz {}\n",
-                    m["cpu"].to_string(),
-                    m["softirq"].to_string()
-                ));
-                result.push_str(&format!(
-                    "cpu{}_steal_hz {}\n",
-                    m["cpu"].to_string(),
-                    m["steal"].to_string()
-                ));
-                result.push_str(&format!(
-                    "cpu{}_guest_hz {}\n",
-                    m["cpu"].to_string(),
-                    m["guest"].to_string()
-                ));
-                result.push_str(&format!(
-                    "cpu{}_guestnice_hz {}\n",
-                    m["cpu"].to_string(),
-                    m["guestnice"].to_string()
-                ));
-            } else if let Some(m) = CTXT_PATTERN.captures(&line) {
-                result.push_str(&format!("procstat_ctxt {}\n", m[1].to_string()));
-            } else if let Some(m) = BTIME_PATTERN.captures(&line) {
-                result.push_str(&format!("procstat_btime_seconds {}\n", m[1].to_string()));
-            } else if let Some(m) = PROCESSES_PATTERN.captures(&line) {
-                result.push_str(&format!("procstat_processes {}\n", m[1].to_string()));
-            } else if let Some(m) = PROCS_RUNNING_PATTERN.captures(&line) {
-                result.push_str(&format!("procstat_procs_running {}\n", m[1].to_string()));
-            } else if let Some(m) = PROCS_BLOCKED_PATTERN.captures(&line) {
-                result.push_str(&format!("procstat_procs_blocked {}\n", m[1].to_string()));
             }
         }
     }

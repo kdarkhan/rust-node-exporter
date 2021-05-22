@@ -63,7 +63,7 @@ lazy_static! {
 }
 
 pub fn get_proc_memifo() -> String {
-    let file = File::open("/proc/meminfo").expect("cannot open file");
+    let file = File::open("/proc/meminfo").expect("cannot open /proc/meminfo");
     let lines = io::BufReader::new(file).lines();
 
     let mut result = String::new();
