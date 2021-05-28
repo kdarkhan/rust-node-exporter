@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 clap = {version = "~2.33.0", features = ["yaml"]}
+ctrlc = "3.1.9"
 hidapi = "1.2.6"
 lazy_static = "1.4.0"
 quick-xml = { version = "0.22", features = [ "serialize" ] }

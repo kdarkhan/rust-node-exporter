@@ -12,6 +12,8 @@ use std::collections::HashSet;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Instant;
 
 const EXPORTER_HDDTEMP: &str = "hddtemp";
@@ -47,8 +49,26 @@ fn main() {
 
     let mut aio_metrics = helpers::nzxt_aio::get_aio_metrics();
 
+    let should_run = Arc::new(AtomicBool::new(true));
+    let r = should_run.clone();
+
+    let listener =
+        TcpListener::bind(format!("127.0.0.1:{}", port)).expect("Could not bind to address");
+
+    let listener_addr = listener
+        .local_addr()
+        .expect("Could not get listener address");
+
     if exporters.contains(EXPORTER_NZXT_AIO) {
         aio_metrics.init();
+
+        ctrlc::set_handler(move || {
+            println!("Setting flag for termination from CTRLC handler");
+            r.store(false, Ordering::SeqCst);
+            // hackily wake up the listener thread
+            let _ = TcpStream::connect(listener_addr);
+        })
+        .expect("Error setting Ctrl-C handler");
     }
 
     let handle_connection = |mut stream: TcpStream| {
@@ -72,11 +92,9 @@ fn main() {
         if exporters.contains(EXPORTER_PROC_STAT) {
             result.push_str(&helpers::proc_stat::get_proc_stat());
         }
-
         if exporters.contains(EXPORTER_PROC_NETDEV) {
             result.push_str(&helpers::proc_netdev::get_proc_netdev());
         }
-
         if exporters.contains(EXPORTER_PROC_MEMINFO) {
             result.push_str(&helpers::proc_meminfo::get_proc_memifo());
         }
@@ -91,8 +109,11 @@ fn main() {
         stream.flush().unwrap();
     };
 
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
     for stream in listener.incoming() {
+        if !should_run.load(Ordering::SeqCst) {
+            println!("CTRLC detected, terminating");
+            return;
+        }
         if let Ok(stream) = stream {
             let now = Instant::now();
             handle_connection(stream);
