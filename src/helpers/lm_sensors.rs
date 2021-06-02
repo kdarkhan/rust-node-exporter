@@ -26,6 +26,17 @@ pub fn get_lm_sensors() -> LmSensors {
     };
 }
 
+impl Drop for LmSensors {
+    fn drop(&mut self) {
+        if !self.subfeatures.is_empty() {
+            println!("executing lm_sensors cleanup");
+            unsafe {
+                sensors_cleanup();
+            }
+        }
+    }
+}
+
 impl LmSensors {
     pub fn init(&mut self) {
         let mut subfeature_map: HashMap<String, SensorValueWrapper> = HashMap::new();

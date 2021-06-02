@@ -60,16 +60,16 @@ fn main() {
         .local_addr()
         .expect("Could not get listener address");
 
+    ctrlc::set_handler(move || {
+        println!("Setting flag for termination from CTRLC handler");
+        r.store(false, Ordering::SeqCst);
+        // hackily wake up the listener thread
+        let _ = TcpStream::connect(listener_addr);
+    })
+    .expect("Error setting Ctrl-C handler");
+
     if exporters.contains(EXPORTER_NZXT_AIO) {
         aio_metrics.init();
-
-        ctrlc::set_handler(move || {
-            println!("Setting flag for termination from CTRLC handler");
-            r.store(false, Ordering::SeqCst);
-            // hackily wake up the listener thread
-            let _ = TcpStream::connect(listener_addr);
-        })
-        .expect("Error setting Ctrl-C handler");
     }
     if exporters.contains(EXPORTER_LM_SENSORS) {
         lm_sensors.init();
