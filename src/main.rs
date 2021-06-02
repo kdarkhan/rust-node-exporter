@@ -48,6 +48,7 @@ fn main() {
     };
 
     let mut aio_metrics = helpers::nzxt_aio::get_aio_metrics();
+    let mut lm_sensors = helpers::lm_sensors::get_lm_sensors();
 
     let should_run = Arc::new(AtomicBool::new(true));
     let r = should_run.clone();
@@ -70,6 +71,9 @@ fn main() {
         })
         .expect("Error setting Ctrl-C handler");
     }
+    if exporters.contains(EXPORTER_LM_SENSORS) {
+        lm_sensors.init();
+    }
 
     let handle_connection = |mut stream: TcpStream| {
         let mut buffer = [0; 1024];
@@ -81,7 +85,8 @@ fn main() {
             result.push_str(&aio_metrics.get_aio_metrics());
         }
         if exporters.contains(EXPORTER_LM_SENSORS) {
-            result.push_str(&helpers::lm_sensors::get_lm_sensor_metrics());
+            // result.push_str(&helpers::lm_sensors::get_lm_sensor_metrics());
+            result.push_str(&lm_sensors.get_lm_sensor_metrics());
         }
         if exporters.contains(EXPORTER_HDDTEMP) {
             result.push_str(&helpers::hddtemp::get_hddtemp_metrics());
