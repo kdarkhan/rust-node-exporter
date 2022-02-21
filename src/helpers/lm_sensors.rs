@@ -53,6 +53,10 @@ impl LmSensors {
             ("asuswmisensors/in2_input", "lm_sensors_plus_5_voltage"),
             ("asuswmisensors/in1_input", "lm_sensors_plus_12_voltage"),
             ("asuswmisensors/in3_input", "lm_sensors_plus_3vsb_voltage"),
+            // NZXT kraken2 data
+            ("kraken2/temp1_input", "aio_liquid_temp"),
+            ("kraken2/fan1_input", "aio_fan_speed"),
+            ("kraken2/fan2_input", "aio_pump_speed"),
         ]
         .into_iter()
         .collect();
@@ -130,7 +134,6 @@ impl LmSensors {
 
     pub fn get_lm_sensor_metrics(&self) -> String {
         let mut result = String::new();
-        let mut first = true;
         for (key, subfeature) in self.subfeatures.iter() {
             let mut value = 0f64;
             let value_ptr: *mut f64 = &mut value;
@@ -140,11 +143,7 @@ impl LmSensors {
                     panic!("Could not get sensor value")
                 }
             }
-            if !first {
-                result.push('\n');
-            }
-            first = false;
-            result.push_str(&format!("{} {}", key, value));
+            result.push_str(&format!("{} {}\n", key, value));
         }
         result
     }

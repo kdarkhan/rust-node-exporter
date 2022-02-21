@@ -50,7 +50,8 @@ fn main() {
             Exporter::ProcNetdev,
             Exporter::ProcStat,
             Exporter::Nvidia,
-            Exporter::NzxtAio,
+            // Exporter::NzxtAio is not enabled by default because it's sensors are available
+            // now from lm_sensors
         ]
     }
 
@@ -92,7 +93,6 @@ fn main() {
             result.push_str(&aio_metrics.get_aio_metrics());
         }
         if exporters.contains(&Exporter::LmSensors) {
-            // result.push_str(&helpers::lm_sensors::get_lm_sensor_metrics());
             result.push_str(&lm_sensors.get_lm_sensor_metrics());
         }
         if exporters.contains(&Exporter::Hddtemp) {
