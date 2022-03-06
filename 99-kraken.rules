@@ -1,0 +1,4 @@
+# Based on
+# https://github.com/liquidctl/liquidctl/blob/main/docs/linux/making-systemd-units-wait-for-devices.md
+
+ACTION=="add", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1e71", ATTRS{idProduct}=="170e", SYMLINK+="kraken", TAG+="systemd"

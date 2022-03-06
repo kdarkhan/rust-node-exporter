@@ -1,5 +1,7 @@
 [Unit]
 Description=Service for exporting my desktop metrics to prometheus
+Requires=dev-kraken.device
+After=dev-kraken.device
 
 [Service]
 Type=simple
