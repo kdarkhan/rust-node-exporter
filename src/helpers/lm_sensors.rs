@@ -49,6 +49,7 @@ impl LmSensors {
             ("asus_wmi_sensors/temp3_input", "lm_sensors_chipset_temp"),
             ("asus_wmi_sensors/fan1_input", "lm_sensors_cpu_fan"),
             ("asus_wmi_sensors/fan3_input", "lm_sensors_chassis_fan"),
+            ("asus_wmi_sensors/fan4_input", "lm_sensors_chassis_fan_3"),
             ("asus_wmi_sensors/in0_input", "lm_sensors_core_voltage"),
             ("asus_wmi_sensors/in2_input", "lm_sensors_plus_5_voltage"),
             ("asus_wmi_sensors/in1_input", "lm_sensors_plus_12_voltage"),
