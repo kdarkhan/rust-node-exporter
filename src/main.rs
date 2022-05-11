@@ -82,7 +82,7 @@ fn main() {
         lm_sensors.init();
     }
 
-    let handle_connection = |mut stream: TcpStream| {
+    let mut handle_connection = |mut stream: TcpStream| {
         let mut buffer = [0; 1024];
 
         stream.read(&mut buffer).unwrap();

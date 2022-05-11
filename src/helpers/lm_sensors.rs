@@ -11,6 +11,8 @@ use std::os::raw;
 use std::ptr;
 use std::str;
 
+const FEATURE_INIT_COUNT: i32 = 10;
+
 struct SensorValueWrapper {
     name: *const sensors_chip_name,
     subfeature_number: i32,
@@ -18,11 +20,13 @@ struct SensorValueWrapper {
 
 pub struct LmSensors {
     subfeatures: HashMap<String, SensorValueWrapper>,
+    init_count: i32,
 }
 
 pub fn get_lm_sensors() -> LmSensors {
     return LmSensors {
         subfeatures: HashMap::new(),
+        init_count: 0,
     };
 }
 
@@ -74,8 +78,11 @@ impl LmSensors {
 
         unsafe {
             println!("lm_sensors initialization started");
-            if sensors_init(ptr::null_mut()) != 0 {
-                panic!("lm_sensors init failed");
+            if self.init_count == 0 {
+                println!("calling sensors_init(null), should happen only once");
+                if sensors_init(ptr::null_mut()) != 0 {
+                    panic!("lm_sensors init failed");
+                }
             }
 
             let mut chip_next: raw::c_int = 0;
@@ -141,10 +148,14 @@ impl LmSensors {
             println!("lm_sensors initialization complete");
         }
         self.subfeatures = subfeature_map;
+        self.init_count += 1;
     }
 
-    pub fn get_lm_sensor_metrics(&self) -> String {
+    pub fn get_lm_sensor_metrics(&mut self) -> String {
         let mut result = String::new();
+        if self.init_count < FEATURE_INIT_COUNT {
+            self.init()
+        }
         for (key, subfeature) in self.subfeatures.iter() {
             let mut value = 0f64;
             let value_ptr: *mut f64 = &mut value;
