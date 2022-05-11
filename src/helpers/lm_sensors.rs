@@ -162,7 +162,8 @@ impl LmSensors {
             unsafe {
                 if sensors_get_value(subfeature.name, subfeature.subfeature_number, value_ptr) != 0
                 {
-                    panic!("Could not get sensor value")
+                    println!("Could not get sensor value {}", key);
+                    continue;
                 }
             }
             result.push_str(&format!("{} {}\n", key, value));
