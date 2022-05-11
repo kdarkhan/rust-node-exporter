@@ -58,6 +58,16 @@ impl LmSensors {
             ("kraken2/temp1_input", "aio_liquid_temp"),
             ("kraken2/fan1_input", "aio_fan_speed"),
             ("kraken2/fan2_input", "aio_pump_speed"),
+            // amdgpu sensors
+            ("amdgpu/in0_input", "amdgpu_vddgfx_voltage"),
+            ("amdgpu/fan1_input", "amdgpu_fan1_speed"),
+            ("amdgpu/temp2_input", "amdgpu_junction_temp"),
+            ("amdgpu/temp3_input", "amdgpu_mem_temp"),
+            ("amdgpu/power1_average", "amdgpu_slowppt_wattage"),
+            // wireless adapater
+            ("iwlwifi_1/temp1_input", "wireless_temp"),
+            // logitech mouse voltage
+            ("hidpp_battery_0/in0_input", "mouse_battery_voltage"),
         ]
         .into_iter()
         .collect();
