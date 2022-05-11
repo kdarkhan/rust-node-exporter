@@ -49,7 +49,6 @@ fn main() {
             Exporter::ProcMeminfo,
             Exporter::ProcNetdev,
             Exporter::ProcStat,
-            Exporter::Nvidia,
             // Exporter::NzxtAio is not enabled by default because it's sensors are available
             // now from lm_sensors
         ]

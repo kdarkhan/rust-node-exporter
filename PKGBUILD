@@ -6,7 +6,8 @@ arch=('x86_64')
 url='https://github.com/kdarkhan/rust-node-exporter'
 provides=('rust-node-exporter')
 license=('GPL3')
-depends=('lm_sensors' 'nvidia-utils')
+depends=('lm_sensors')
+optdepends=('nvidia-utils: fetching nvidia sensors data')
 makedepends=(
     'rust'
 )
