@@ -78,11 +78,13 @@ impl LmSensors {
 
         unsafe {
             println!("lm_sensors initialization started");
-            if self.init_count == 0 {
-                println!("calling sensors_init(null), should happen only once");
-                if sensors_init(ptr::null_mut()) != 0 {
-                    panic!("lm_sensors init failed");
-                }
+            if self.init_count > 0 {
+                println!("calling sensors_cleanup");
+                sensors_cleanup();
+            }
+            println!("calling sensors_init(null)");
+            if sensors_init(ptr::null_mut()) != 0 {
+                panic!("lm_sensors init failed");
             }
 
             let mut chip_next: raw::c_int = 0;
