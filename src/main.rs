@@ -5,6 +5,7 @@ extern crate serde;
 mod helpers;
 
 use clap::{ArgEnum, Parser};
+use helpers::amd_radeontop;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::net::TcpStream;
@@ -35,6 +36,7 @@ enum Exporter {
     ProcStat,
     Nvidia,
     NzxtAio,
+    AmdRadeontop,
 }
 
 fn main() {
@@ -43,14 +45,14 @@ fn main() {
     let port: u32 = cli.port;
     let mut exporters: Vec<Exporter> = cli.exporters;
     if exporters.is_empty() {
+        // default exporters to enable
         exporters = vec![
             Exporter::Hddtemp,
             Exporter::LmSensors,
             Exporter::ProcMeminfo,
             Exporter::ProcNetdev,
             Exporter::ProcStat,
-            // Exporter::NzxtAio is not enabled by default because it's sensors are available
-            // now from lm_sensors
+            Exporter::AmdRadeontop,
         ]
     }
 
@@ -82,6 +84,10 @@ fn main() {
         lm_sensors.init();
     }
 
+    if exporters.contains(&Exporter::AmdRadeontop) {
+        amd_radeontop::init();
+    }
+
     let mut handle_connection = |mut stream: TcpStream| {
         let mut buffer = [0; 1024];
 
@@ -108,6 +114,10 @@ fn main() {
         }
         if exporters.contains(&Exporter::ProcMeminfo) {
             result.push_str(&helpers::proc_meminfo::get_proc_memifo());
+        }
+
+        if exporters.contains(&Exporter::AmdRadeontop) {
+            result.push_str(&helpers::amd_radeontop::get_radeontop_stats());
         }
 
         let response = format!(
