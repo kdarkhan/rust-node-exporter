@@ -6,6 +6,7 @@ After=dev-kraken.device
 [Service]
 Type=simple
 ExecStart=rust-node-exporter
+KillSignal=SIGINT
 
 [Install]
 WantedBy=multi-user.target
