@@ -1,5 +1,5 @@
 pkgname=rust-node-exporter
-pkgver=0.0.2
+pkgver=0.2.2
 pkgrel=1
 pkgdesc='Prometheus metrics exporter for my desktop machine'
 arch=('x86_64')
