@@ -4,7 +4,7 @@ extern crate quick_xml;
 extern crate serde;
 mod helpers;
 
-use clap::{ArgEnum, Parser};
+use clap::{Parser, ValueEnum};
 use helpers::amd_radeontop;
 use std::io::prelude::*;
 use std::net::TcpListener;
@@ -18,15 +18,15 @@ use std::time::Instant;
 #[clap(about = "Prometheus exporter for my desktop metrics")]
 struct Cli {
     /// Port where the HTTP server is listening
-    #[clap(default_value_t = 7878, short = 'p')]
+    #[arg(default_value_t = 7878, short = 'p')]
     port: u32,
 
     /// List of enabled exporters (all are enabled if none provided)
-    #[clap(arg_enum, short = 'x')]
+    #[arg(value_enum, short = 'x')]
     exporters: Vec<Exporter>,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 #[clap(rename_all = "snake_case")]
 enum Exporter {
     Hddtemp,

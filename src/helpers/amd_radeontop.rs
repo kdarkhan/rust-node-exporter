@@ -7,7 +7,7 @@ use std::process::{Command, Stdio};
 use std::sync::Mutex;
 use std::thread;
 
-const RADEONTOP_PRELUDE: &'static str = "Dumping to -, until termination.";
+const RADEONTOP_PRELUDE: &str = "Dumping to -, until termination.";
 
 lazy_static! {
     static ref CURRENT_STATS: Mutex<Option<Stats>> = Mutex::new(None);

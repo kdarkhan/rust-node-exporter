@@ -73,7 +73,7 @@ pub fn get_proc_memifo() -> String {
             let mut iter = line.split_ascii_whitespace();
             let first = iter.next().expect("first value expected");
             let second = iter.next().expect("second value expected");
-            iter.next().map(|x| -> () { assert!(x == "kB") });
+            iter.next().map(|x| assert!(x == "kB"));
 
             if FIELD_MAP.contains_key(first) {
                 let kbytes: u64 = second.parse().unwrap();
