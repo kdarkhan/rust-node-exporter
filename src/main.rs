@@ -121,7 +121,7 @@ fn main() {
         }
 
         let response = format!(
-            "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+            "HTTP/1.1 200 OK\r\nContent-Type: text/plain; version=0.0.4;\r\nContent-Length: {}\r\n\r\n{}",
             result.len(),
             result
         );
