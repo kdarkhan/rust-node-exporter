@@ -56,7 +56,6 @@ fn main() {
         ]
     }
 
-    let mut aio_metrics = helpers::nzxt_aio::get_aio_metrics();
     let mut lm_sensors = helpers::lm_sensors::get_lm_sensors();
 
     let should_run = Arc::new(AtomicBool::new(true));
@@ -77,9 +76,6 @@ fn main() {
     })
     .expect("Error setting Ctrl-C handler");
 
-    if exporters.contains(&Exporter::NzxtAio) {
-        aio_metrics.init();
-    }
     if exporters.contains(&Exporter::LmSensors) {
         lm_sensors.init();
     }
@@ -96,7 +92,7 @@ fn main() {
 
         let mut result = String::new();
         if exporters.contains(&Exporter::NzxtAio) {
-            result.push_str(&aio_metrics.get_aio_metrics());
+            result.push_str(&helpers::nzxt_aio::get_aio_metrics());
         }
         if exporters.contains(&Exporter::LmSensors) {
             result.push_str(&lm_sensors.get_lm_sensor_metrics());
