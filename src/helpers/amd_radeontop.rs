@@ -12,10 +12,13 @@ const RADEONTOP_PRELUDE: &str = "Dumping to -, until termination.";
 lazy_static! {
     static ref CURRENT_STATS: Mutex<Option<Stats>> = Mutex::new(None);
 
+    // Example line:
+    // 1732491561.725899: bus 09, gpu 100.00%, ee 0.00%, vgt 100.00%, ta 100.00%, sx 100.00%, sh 100.00%, spi 100.00%, sc 100.00%, pa 0.00%, db 100.00%, cb 100.00%, vram 8.29% 1351.82mb, gtt 6.52% 517.27mb, mclk 9.60% 0.096ghz, sclk 2.97% 0.079ghz
     static ref RADEONTOP_LINE_PATTERN: Regex = Regex::new(
-        r"^[\d.]+: bus 0b, gpu ([\d.]+)%, ee ([\d.]+)%, vgt ([\d.]+)%, ta ([\d.]+)%, sx ([\d.]+)%, sh ([\d.]+)%, spi ([\d.]+)%, sc ([\d.]+)%, pa ([\d.]+)%, db ([\d.]+)%, cb ([\d.]+)%, vram ([\d.]+)% ([\d.]+)mb, gtt ([\d.]+)% ([\d.]+)mb, mclk ([\d.]+)% ([\d.]+)ghz, sclk ([\d.]+)% ([\d.]+)ghz$"
+        r"^[\d.]+: bus \w+, gpu ([\d.]+)%, ee ([\d.]+)%, vgt ([\d.]+)%, ta ([\d.]+)%, sx ([\d.]+)%, sh ([\d.]+)%, spi ([\d.]+)%, sc ([\d.]+)%, pa ([\d.]+)%, db ([\d.]+)%, cb ([\d.]+)%, vram ([\d.]+)% ([\d.]+)mb, gtt ([\d.]+)% ([\d.]+)mb, mclk ([\d.]+)% ([\d.]+)ghz, sclk ([\d.]+)% ([\d.]+)ghz$"
     )
     .unwrap();
+
 }
 
 pub fn init() {
