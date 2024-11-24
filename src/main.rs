@@ -91,7 +91,8 @@ fn main() {
     let mut handle_connection = |mut stream: TcpStream| {
         let mut buffer = [0; 1024];
 
-        stream.read(&mut buffer).unwrap();
+        let bytes_read = stream.read(&mut buffer).unwrap();
+        println!("Read bytes {}", bytes_read);
 
         let mut result = String::new();
         if exporters.contains(&Exporter::NzxtAio) {

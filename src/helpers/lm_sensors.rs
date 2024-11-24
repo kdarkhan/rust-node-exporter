@@ -24,10 +24,10 @@ pub struct LmSensors {
 }
 
 pub fn get_lm_sensors() -> LmSensors {
-    return LmSensors {
+    LmSensors {
         subfeatures: HashMap::new(),
         init_count: 0,
-    };
+    }
 }
 
 impl Drop for LmSensors {
@@ -84,7 +84,7 @@ impl LmSensors {
             let chip_next_ptr: *mut raw::c_int = &mut chip_next;
             loop {
                 let chip = sensors_get_detected_chips(ptr::null_mut(), chip_next_ptr);
-                if chip == ptr::null() {
+                if chip.is_null() {
                     break;
                 }
 
@@ -97,7 +97,7 @@ impl LmSensors {
 
                 loop {
                     let feature = sensors_get_features(chip, feature_next_ptr);
-                    if feature == ptr::null() {
+                    if feature.is_null() {
                         break;
                     }
 
@@ -110,7 +110,7 @@ impl LmSensors {
                     loop {
                         let subfeature =
                             sensors_get_all_subfeatures(chip, feature, subfeature_next_ptr);
-                        if subfeature == ptr::null() {
+                        if subfeature.is_null() {
                             break;
                         }
                         let subfeature_name = CStr::from_ptr((*subfeature).name).to_str().unwrap();

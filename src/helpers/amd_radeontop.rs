@@ -34,10 +34,9 @@ pub fn init() {
     let child_id = child.id();
     println!("Child id is {}", child_id);
 
-    let status_code = child.try_wait().expect(&format!(
-        "Could not get status of child process {}",
-        child_id
-    ));
+    let status_code = child
+        .try_wait()
+        .unwrap_or_else(|_| panic!("Could not get status of child process {}", child_id));
     if status_code.is_some() {
         panic!(
             "Expected the child {} to not finish but it looks like it finished",
@@ -47,30 +46,27 @@ pub fn init() {
 
     let stdout = child
         .stdout
-        .expect(&format!("Could not get stdout of {}", child_id));
+        .unwrap_or_else(|| panic!("Could not get stdout of {}", child_id));
 
     thread::spawn(move || {
         let reader = BufReader::new(stdout);
 
-        reader
-            .lines()
-            .filter_map(|line| line.ok())
-            .for_each(|line| {
-                println!("{}", line);
-                if !line.eq(RADEONTOP_PRELUDE) {
-                    if let Some(m) = RADEONTOP_LINE_PATTERN.captures(&line) {
-                        let mut current_stats = CURRENT_STATS.lock().unwrap();
-                        *current_stats = Some(parse_stdout_line(m));
-                    } else {
-                        panic!("Could not parse {}", line)
-                    }
+        reader.lines().map_while(Result::ok).for_each(|line| {
+            println!("{}", line);
+            if !line.eq(RADEONTOP_PRELUDE) {
+                if let Some(m) = RADEONTOP_LINE_PATTERN.captures(&line) {
+                    let mut current_stats = CURRENT_STATS.lock().unwrap();
+                    *current_stats = Some(parse_stdout_line(m));
+                } else {
+                    panic!("Could not parse {}", line)
                 }
-            });
+            }
+        });
     });
 }
 
 fn parse_stdout_line(captures: Captures) -> Stats {
-    return Stats {
+    Stats {
         gpu: to_f64(&captures[1]),
         ee: to_f64(&captures[2]),
         vgt: to_f64(&captures[3]),
@@ -90,7 +86,7 @@ fn parse_stdout_line(captures: Captures) -> Stats {
         mclk: to_f64(&captures[17]),
         sclk_percent: to_f64(&captures[18]),
         sclk: to_f64(&captures[19]),
-    };
+    }
 }
 
 fn to_f64(input: &str) -> f64 {
@@ -160,5 +156,5 @@ pub fn get_radeontop_stats() -> String {
         stats.sclk_percent
     ));
     result.push_str(&format!("amdgpu_radeontop_sclk {}\n", stats.sclk));
-    return result;
+    result
 }

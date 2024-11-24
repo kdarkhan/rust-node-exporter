@@ -29,26 +29,22 @@ pub fn get_proc_netdev() -> String {
 
     let mut result = String::new();
 
-    for line in lines {
-        if let Ok(line) = line {
-            let mut iter = line.split_ascii_whitespace();
+    for line in lines.map_while(Result::ok) {
+        let mut iter = line.split_ascii_whitespace();
 
-            let iface_name = iter.next().unwrap();
+        let first_word = iter.next().unwrap();
 
-            if iface_name.ends_with(":") {
-                let stuff: Vec<&str> = iter.collect();
-                if stuff.len() == 16 {
-                    for (idx, item) in stuff.iter().enumerate() {
-                        result.push_str(&format!(
-                            "procnetdev_{}_bytes{{label=\"{}\"}} {}\n",
-                            IFACE_FIELD_MAP[idx],
-                            &iface_name[..(iface_name.len() - 1)],
-                            item
-                        ));
-                    }
-                } else {
-                    panic!("Unexpected line {} with iface", line);
+        if let Some(iface_name) = first_word.strip_suffix(":") {
+            let stuff: Vec<&str> = iter.collect();
+            if stuff.len() == 16 {
+                for (idx, item) in stuff.iter().enumerate() {
+                    result.push_str(&format!(
+                        "procnetdev_{}_bytes{{label=\"{}\"}} {}\n",
+                        IFACE_FIELD_MAP[idx], iface_name, item
+                    ));
                 }
+            } else {
+                panic!("Unexpected line {} with iface", line);
             }
         }
     }

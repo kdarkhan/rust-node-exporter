@@ -34,26 +34,24 @@ pub fn get_proc_stat() -> String {
 
     let mut result = String::new();
 
-    for line in lines {
-        if let Ok(line) = line {
-            let mut iter = line.split_ascii_whitespace();
-            let field_id = &iter.next().unwrap();
-            if line.starts_with("cpu") {
-                for (idx, item) in iter.enumerate() {
-                    if idx < 10 {
-                        result.push_str(&format!(
-                            "procstat_{}_{}_hz {}\n",
-                            field_id, CPU_FIELDS_MAP[idx], item
-                        ));
-                    }
+    for line in lines.map_while(Result::ok) {
+        let mut iter = line.split_ascii_whitespace();
+        let field_id = &iter.next().unwrap();
+        if line.starts_with("cpu") {
+            for (idx, item) in iter.enumerate() {
+                if idx < 10 {
+                    result.push_str(&format!(
+                        "procstat_{}_{}_hz {}\n",
+                        field_id, CPU_FIELDS_MAP[idx], item
+                    ));
                 }
-            } else if FIELD_MAP.contains_key(field_id) {
-                result.push_str(&format!(
-                    "{} {}\n",
-                    FIELD_MAP[field_id],
-                    iter.next().unwrap()
-                ));
             }
+        } else if FIELD_MAP.contains_key(field_id) {
+            result.push_str(&format!(
+                "{} {}\n",
+                FIELD_MAP[field_id],
+                iter.next().unwrap()
+            ));
         }
     }
     result

@@ -68,17 +68,17 @@ pub fn get_proc_memifo() -> String {
 
     let mut result = String::new();
 
-    for line in lines {
-        if let Ok(line) = line {
-            let mut iter = line.split_ascii_whitespace();
-            let first = iter.next().expect("first value expected");
-            let second = iter.next().expect("second value expected");
-            iter.next().map(|x| assert!(x == "kB"));
+    for line in lines.map_while(Result::ok) {
+        let mut iter = line.split_ascii_whitespace();
+        let first = iter.next().expect("first value expected");
+        let second = iter.next().expect("second value expected");
+        if let Some(line_ok) = iter.next() {
+            assert!(line_ok == "kB")
+        }
 
-            if FIELD_MAP.contains_key(first) {
-                let kbytes: u64 = second.parse().unwrap();
-                result.push_str(&format!("{} {}\n", FIELD_MAP[first], kbytes * 1024));
-            }
+        if FIELD_MAP.contains_key(first) {
+            let kbytes: u64 = second.parse().unwrap();
+            result.push_str(&format!("{} {}\n", FIELD_MAP[first], kbytes * 1024));
         }
     }
     result

@@ -9,7 +9,7 @@ pub struct AioMetrics {
 }
 
 pub fn get_aio_metrics() -> AioMetrics {
-    return AioMetrics { dev: None };
+    AioMetrics { dev: None }
 }
 
 impl AioMetrics {
@@ -25,10 +25,10 @@ impl AioMetrics {
         let temp = buf[1] as f64 + buf[2] as f64 / 10.0;
         let fan_speed = (buf[3] as u64) << 8 | (buf[4] as u64);
         let pump_speed = (buf[5] as u64) << 8 | (buf[6] as u64);
-        return format!(
+        format!(
             "aio_liquid_temp {}\naio_fan_speed {}\naio_pump_speed {}\n",
             temp, fan_speed, pump_speed
-        );
+        )
     }
 
     pub fn init(&mut self) {
