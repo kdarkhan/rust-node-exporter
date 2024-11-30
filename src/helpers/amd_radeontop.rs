@@ -7,18 +7,35 @@ use std::process::{Command, Stdio};
 use std::sync::Mutex;
 use std::thread;
 
+use std::time::SystemTime;
+
 const RADEONTOP_PRELUDE: &str = "Dumping to -, until termination.";
+const MAX_RESULT_LIFE: u64 = 20;
 
 lazy_static! {
     static ref CURRENT_STATS: Mutex<Option<Stats>> = Mutex::new(None);
+    static ref CURRENT_CLK_STATS: Mutex<Option<ClkStats>> = Mutex::new(None);
+    static ref LAST_UPDATE: Mutex<u64> = Mutex::new(0);
 
     // Example line:
     // 1732491561.725899: bus 09, gpu 100.00%, ee 0.00%, vgt 100.00%, ta 100.00%, sx 100.00%, sh 100.00%, spi 100.00%, sc 100.00%, pa 0.00%, db 100.00%, cb 100.00%, vram 8.29% 1351.82mb, gtt 6.52% 517.27mb, mclk 9.60% 0.096ghz, sclk 2.97% 0.079ghz
     static ref RADEONTOP_LINE_PATTERN: Regex = Regex::new(
-        r"^[\d.]+: bus \w+, gpu ([\d.]+)%, ee ([\d.]+)%, vgt ([\d.]+)%, ta ([\d.]+)%, sx ([\d.]+)%, sh ([\d.]+)%, spi ([\d.]+)%, sc ([\d.]+)%, pa ([\d.]+)%, db ([\d.]+)%, cb ([\d.]+)%, vram ([\d.]+)% ([\d.]+)mb, gtt ([\d.]+)% ([\d.]+)mb, mclk ([\d.]+)% ([\d.]+)ghz, sclk ([\d.]+)% ([\d.]+)ghz$"
+        r"^[\d.]+: bus \w+, gpu ([\d.]+)%, ee ([\d.]+)%, vgt ([\d.]+)%, ta ([\d.]+)%, sx ([\d.]+)%, sh ([\d.]+)%, spi ([\d.]+)%, sc ([\d.]+)%, pa ([\d.]+)%, db ([\d.]+)%, cb ([\d.]+)%, vram ([\d.]+)% ([\d.]+)mb, gtt ([\d.]+)% ([\d.]+)mb"
     )
     .unwrap();
 
+    static ref RADEONTOP_CLK_PATTERN: Regex = Regex::new(
+        r"mclk ([\d.]+)% ([\d.]+)ghz, sclk ([\d.]+)% ([\d.]+)ghz$"
+    )
+    .unwrap();
+
+}
+
+fn get_sys_time_in_secs() -> u64 {
+    match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(n) => n.as_secs(),
+        Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+    }
 }
 
 pub fn init() {
@@ -59,8 +76,16 @@ pub fn init() {
             if !line.eq(RADEONTOP_PRELUDE) {
                 if let Some(m) = RADEONTOP_LINE_PATTERN.captures(&line) {
                     let mut current_stats = CURRENT_STATS.lock().unwrap();
+                    let mut last_update = LAST_UPDATE.lock().unwrap();
                     *current_stats = Some(parse_stdout_line(m));
+                    *last_update = get_sys_time_in_secs();
+
+                    if let Some(m) = RADEONTOP_CLK_PATTERN.captures(&line) {
+                        let mut current_clk_stats = CURRENT_CLK_STATS.lock().unwrap();
+                        *current_clk_stats = Some(parse_clk_captures(m));
+                    }
                 } else {
+                    // TODO: make sure to panic the whole process and not only this thread
                     panic!("Could not parse {}", line)
                 }
             }
@@ -85,10 +110,15 @@ fn parse_stdout_line(captures: Captures) -> Stats {
         vram: to_f64(&captures[13]),
         gtt_percent: to_f64(&captures[14]),
         gtt: to_f64(&captures[15]),
-        mclk_percent: to_f64(&captures[16]),
-        mclk: to_f64(&captures[17]),
-        sclk_percent: to_f64(&captures[18]),
-        sclk: to_f64(&captures[19]),
+    }
+}
+
+fn parse_clk_captures(captures: Captures) -> ClkStats {
+    ClkStats {
+        mclk_percent: to_f64(&captures[1]),
+        mclk: to_f64(&captures[2]),
+        sclk_percent: to_f64(&captures[3]),
+        sclk: to_f64(&captures[4]),
     }
 }
 
@@ -111,17 +141,29 @@ struct Stats {
     cb: f64,
     vram_percent: f64,
     gtt_percent: f64,
-    mclk_percent: f64,
-    sclk_percent: f64,
     vram: f64,
     gtt: f64,
+}
+
+#[derive(Debug, Deserialize, PartialEq)]
+struct ClkStats {
+    mclk_percent: f64,
+    sclk_percent: f64,
     mclk: f64,
     sclk: f64,
 }
 
 pub fn get_radeontop_stats() -> String {
     let current_stats = CURRENT_STATS.lock().unwrap();
+    let last_update = LAST_UPDATE.lock().unwrap();
     if current_stats.is_none() {
+        return "".to_string();
+    }
+    let current_clk_stats = CURRENT_CLK_STATS.lock().unwrap();
+
+    // If the result is too outdated
+    let current_time = get_sys_time_in_secs();
+    if current_time - *last_update > MAX_RESULT_LIFE {
         return "".to_string();
     }
 
@@ -149,15 +191,22 @@ pub fn get_radeontop_stats() -> String {
         stats.gtt_percent
     ));
     result.push_str(&format!("amdgpu_radeontop_gtt {}\n", stats.gtt));
+
+    if current_clk_stats.is_none() {
+        return result;
+    }
+
+    // Add clk stats
+    let clk_stats = current_clk_stats.as_ref().unwrap();
     result.push_str(&format!(
         "amdgpu_radeontop_mclk_percent {}\n",
-        stats.mclk_percent
+        clk_stats.mclk_percent
     ));
-    result.push_str(&format!("amdgpu_radeontop_mclk {}\n", stats.mclk));
+    result.push_str(&format!("amdgpu_radeontop_mclk {}\n", clk_stats.mclk));
     result.push_str(&format!(
         "amdgpu_radeontop_sclk_percent {}\n",
-        stats.sclk_percent
+        clk_stats.sclk_percent
     ));
-    result.push_str(&format!("amdgpu_radeontop_sclk {}\n", stats.sclk));
+    result.push_str(&format!("amdgpu_radeontop_sclk {}\n", clk_stats.sclk));
     result
 }
