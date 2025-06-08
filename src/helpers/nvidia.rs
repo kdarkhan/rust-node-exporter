@@ -83,12 +83,12 @@ pub fn get_nvidia_metrics() -> String {
                 result
             }
             Err(e) => {
-                eprintln!("error parsing nvidia-smi stdout {}", e);
+                eprintln!("error parsing nvidia-smi stdout {e}");
                 panic!()
             }
         },
         Err(e) => {
-            eprintln!("error running nvidia-smi {}", e);
+            eprintln!("error running nvidia-smi {e}");
             panic!()
         }
     }

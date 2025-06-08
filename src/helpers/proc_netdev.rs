@@ -44,7 +44,7 @@ pub fn get_proc_netdev() -> String {
                     ));
                 }
             } else {
-                panic!("Unexpected line {} with iface", line);
+                panic!("Unexpected line {line} with iface");
             }
         }
     }

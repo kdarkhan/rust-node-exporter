@@ -52,27 +52,24 @@ pub fn init() {
         .expect("Failed to start radeontop command");
 
     let child_id = child.id();
-    println!("Child id is {}", child_id);
+    println!("Child id is {child_id}");
 
     let status_code = child
         .try_wait()
-        .unwrap_or_else(|_| panic!("Could not get status of child process {}", child_id));
+        .unwrap_or_else(|_| panic!("Could not get status of child process {child_id}"));
     if status_code.is_some() {
-        panic!(
-            "Expected the child {} to not finish but it looks like it finished",
-            child_id
-        );
+        panic!("Expected the child {child_id} to not finish but it looks like it finished");
     }
 
     let stdout = child
         .stdout
-        .unwrap_or_else(|| panic!("Could not get stdout of {}", child_id));
+        .unwrap_or_else(|| panic!("Could not get stdout of {child_id}"));
 
     thread::spawn(move || {
         let reader = BufReader::new(stdout);
 
         reader.lines().map_while(Result::ok).for_each(|line| {
-            println!("{}", line);
+            println!("{line}");
             if !line.eq(RADEONTOP_PRELUDE) {
                 if let Some(m) = RADEONTOP_LINE_PATTERN.captures(&line) {
                     let mut current_stats = CURRENT_STATS.lock().unwrap();
@@ -80,13 +77,15 @@ pub fn init() {
                     *current_stats = Some(parse_stdout_line(m));
                     *last_update = get_sys_time_in_secs();
 
+                    // mclk and sclk results are sometimes not returned. Missing them,
+                    // is not problematic.
                     if let Some(m) = RADEONTOP_CLK_PATTERN.captures(&line) {
                         let mut current_clk_stats = CURRENT_CLK_STATS.lock().unwrap();
                         *current_clk_stats = Some(parse_clk_captures(m));
                     }
                 } else {
                     // TODO: make sure to panic the whole process and not only this thread
-                    panic!("Could not parse {}", line)
+                    panic!("Could not parse {line}")
                 }
             }
         });

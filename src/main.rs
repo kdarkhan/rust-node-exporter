@@ -62,7 +62,7 @@ fn main() {
     let r = should_run.clone();
 
     let listener =
-        TcpListener::bind(format!("127.0.0.1:{}", port)).expect("Could not bind to address");
+        TcpListener::bind(format!("127.0.0.1:{port}")).expect("Could not bind to address");
 
     let listener_addr = listener
         .local_addr()
@@ -88,7 +88,7 @@ fn main() {
         let mut buffer = [0; 1024];
 
         let bytes_read = stream.read(&mut buffer).unwrap();
-        println!("Read bytes {}", bytes_read);
+        println!("Read bytes {bytes_read}");
 
         let mut result = String::new();
         if exporters.contains(&Exporter::NzxtAio) {

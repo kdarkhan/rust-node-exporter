@@ -90,7 +90,7 @@ impl LmSensors {
 
                 let prefix = CStr::from_ptr((*chip).prefix).to_str().unwrap();
                 let path = CStr::from_ptr((*chip).path).to_str().unwrap();
-                println!("Found chip with prefix {} and path {}", prefix, path);
+                println!("Found chip with prefix {prefix} and path {path}");
 
                 let mut feature_next: raw::c_int = 0;
                 let feature_next_ptr: *mut raw::c_int = &mut feature_next;
@@ -102,7 +102,7 @@ impl LmSensors {
                     }
 
                     let feature_name = CStr::from_ptr((*feature).name).to_str().unwrap();
-                    println!("Found feature {} from chip {}", feature_name, prefix);
+                    println!("Found feature {feature_name} from chip {prefix}");
 
                     let mut subfeature_next: raw::c_int = 0;
                     let subfeature_next_ptr: *mut raw::c_int = &mut subfeature_next;
@@ -121,9 +121,9 @@ impl LmSensors {
                         );
 
                         if ((*subfeature).flags & SENSORS_MODE_R) != 0 {
-                            let key = format!("{}/{}", prefix, subfeature_name);
+                            let key = format!("{prefix}/{subfeature_name}");
                             if relevant_keys.contains_key(key.as_str()) {
-                                println!("Found interesting key {}/{}", prefix, subfeature_name);
+                                println!("Found interesting key {prefix}/{subfeature_name}");
                                 subfeature_map.insert(
                                     relevant_keys.get(key.as_str()).unwrap().to_string(),
                                     SensorValueWrapper {
@@ -132,7 +132,7 @@ impl LmSensors {
                                     },
                                 );
                             } else {
-                                println!("Ignoring key {}/{}", prefix, subfeature_name);
+                                println!("Ignoring key {prefix}/{subfeature_name}");
                             }
                         } else {
                             println!("Ignoring non-readable sensor");
@@ -157,11 +157,11 @@ impl LmSensors {
             unsafe {
                 if sensors_get_value(subfeature.name, subfeature.subfeature_number, value_ptr) != 0
                 {
-                    println!("Could not get sensor value {}", key);
+                    println!("Could not get sensor value {key}");
                     continue;
                 }
             }
-            result.push_str(&format!("{} {}\n", key, value));
+            result.push_str(&format!("{key} {value}\n"));
         }
         result
     }
