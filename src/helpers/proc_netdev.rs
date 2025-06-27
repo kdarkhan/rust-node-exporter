@@ -1,9 +1,10 @@
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
+use std::sync::LazyLock;
 
-lazy_static! {
-    static ref IFACE_FIELD_MAP: &'static [&'static str] = &[
+static IFACE_FIELD_MAP: LazyLock<&'static [&'static str]> = LazyLock::new(|| {
+    &[
         "rx",
         "rx_packets",
         "rx_errs",
@@ -20,8 +21,8 @@ lazy_static! {
         "tx_colls",
         "tx_carrier",
         "tx_compressed",
-    ];
-}
+    ]
+});
 
 pub fn get_proc_netdev() -> String {
     let file = File::open("/proc/net/dev").expect("cannot open /proc/net/dev");

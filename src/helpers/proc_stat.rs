@@ -2,19 +2,21 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
+use std::sync::LazyLock;
 
-lazy_static! {
-    static ref FIELD_MAP: HashMap<&'static str, &'static str> = {
-        let mut map = HashMap::new();
-        map.insert("ctxt", "procstat_ctxt");
-        map.insert("btime", "procstat_btime_seconds");
-        map.insert("processes", "procstat_processes");
-        map.insert("procs_running", "procstat_procs_running");
-        map.insert("procs_blocked", "procstat_procs_blocked");
-        map.insert("procs_softirq", "procstat_procs_blocked");
-        map
-    };
-    static ref CPU_FIELDS_MAP: &'static [&'static str] = &[
+static FIELD_MAP: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
+    let mut map = HashMap::new();
+    map.insert("ctxt", "procstat_ctxt");
+    map.insert("btime", "procstat_btime_seconds");
+    map.insert("processes", "procstat_processes");
+    map.insert("procs_running", "procstat_procs_running");
+    map.insert("procs_blocked", "procstat_procs_blocked");
+    map.insert("procs_softirq", "procstat_procs_blocked");
+    map
+});
+
+static CPU_FIELDS_MAP: LazyLock<&'static [&'static str]> = LazyLock::new(|| {
+    &[
         "user",
         "nice",
         "system",
@@ -24,9 +26,9 @@ lazy_static! {
         "softirq",
         "steal",
         "guest",
-        "guestnice"
-    ];
-}
+        "guestnice",
+    ]
+});
 
 pub fn get_proc_stat() -> String {
     let file = File::open("/proc/stat").expect("cannot open /proc/stat");

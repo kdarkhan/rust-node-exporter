@@ -1,18 +1,19 @@
 use regex::Regex;
 use std::io::prelude::*;
 use std::net::TcpStream;
+use std::sync::LazyLock;
+
+static HDDTEMP_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+            r"\|CT1000MX500SSD4\|([0-9.]+)\|C\|.+\|Samsung SSD 860 EVO M.2\|([0-9.]+)\|C\|.+\|WDC WD20EFZX-68AWUN0\|([0-9.]+)\|C\|.+\|WDC WD20EFZX-68AWUN0\|([0-9.]+)\|C\|.*$"
+        )
+        .unwrap()
+});
 
 pub fn get_hddtemp_metrics() -> String {
     // hddtemp service is listening on port 7634
     let mut stream =
         TcpStream::connect("127.0.0.1:7634").expect("could not connect to hddtemp service");
-
-    lazy_static! {
-        static ref HDDTEMP_PATTERN: Regex = Regex::new(
-            r"\|CT1000MX500SSD4\|([0-9.]+)\|C\|.+\|Samsung SSD 860 EVO M.2\|([0-9.]+)\|C\|.+\|WDC WD20EFZX-68AWUN0\|([0-9.]+)\|C\|.+\|WDC WD20EFZX-68AWUN0\|([0-9.]+)\|C\|.*$"
-        )
-        .unwrap();
-    }
 
     let mut v: Vec<u8> = Vec::new();
     stream

@@ -4,6 +4,7 @@ use serde::Deserialize;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::process::{Command, Stdio};
+use std::sync::LazyLock;
 use std::sync::Mutex;
 use std::thread;
 
@@ -12,24 +13,19 @@ use std::time::SystemTime;
 const RADEONTOP_PRELUDE: &str = "Dumping to -, until termination.";
 const MAX_RESULT_LIFE: u64 = 20;
 
-lazy_static! {
-    static ref CURRENT_STATS: Mutex<Option<Stats>> = Mutex::new(None);
-    static ref CURRENT_CLK_STATS: Mutex<Option<ClkStats>> = Mutex::new(None);
-    static ref LAST_UPDATE: Mutex<u64> = Mutex::new(0);
-
+static CURRENT_STATS: LazyLock<Mutex<Option<Stats>>> = LazyLock::new(|| Mutex::new(None));
+static CURRENT_CLK_STATS: LazyLock<Mutex<Option<ClkStats>>> = LazyLock::new(|| Mutex::new(None));
+static LAST_UPDATE: LazyLock<Mutex<u64>> = LazyLock::new(|| Mutex::new(0));
+static RADEONTOP_LINE_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
     // Example line:
     // 1732491561.725899: bus 09, gpu 100.00%, ee 0.00%, vgt 100.00%, ta 100.00%, sx 100.00%, sh 100.00%, spi 100.00%, sc 100.00%, pa 0.00%, db 100.00%, cb 100.00%, vram 8.29% 1351.82mb, gtt 6.52% 517.27mb, mclk 9.60% 0.096ghz, sclk 2.97% 0.079ghz
-    static ref RADEONTOP_LINE_PATTERN: Regex = Regex::new(
-        r"^[\d.]+: bus \w+, gpu ([\d.]+)%, ee ([\d.]+)%, vgt ([\d.]+)%, ta ([\d.]+)%, sx ([\d.]+)%, sh ([\d.]+)%, spi ([\d.]+)%, sc ([\d.]+)%, pa ([\d.]+)%, db ([\d.]+)%, cb ([\d.]+)%, vram ([\d.]+)% ([\d.]+)mb, gtt ([\d.]+)% ([\d.]+)mb"
-    )
-    .unwrap();
-
-    static ref RADEONTOP_CLK_PATTERN: Regex = Regex::new(
-        r"mclk ([\d.]+)% ([\d.]+)ghz, sclk ([\d.]+)% ([\d.]+)ghz$"
-    )
-    .unwrap();
-
-}
+    Regex::new(
+        r"^[\d.]+: bus \w+, gpu ([\d.]+)%, ee ([\d.]+)%, vgt ([\d.]+)%, ta ([\d.]+)%, sx ([\d.]+)%, sh ([\d.]+)%, spi ([\d.]+)%, sc ([\d.]+)%, pa ([\d.]+)%, db ([\d.]+)%, cb ([\d.]+)%, vram ([\d.]+)% ([\d.]+)mb, gtt ([\d.]+)% ([\d.]+)mb",
+    ).unwrap()
+});
+static RADEONTOP_CLK_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"mclk ([\d.]+)% ([\d.]+)ghz, sclk ([\d.]+)% ([\d.]+)ghz$").unwrap()
+});
 
 fn get_sys_time_in_secs() -> u64 {
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
