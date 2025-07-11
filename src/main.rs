@@ -33,7 +33,7 @@ enum Exporter {
     ProcNetdev,
     ProcStat,
     Nvidia,
-    NzxtAio,
+    NzxtAio, // No longer needed because these sensors are exposed in lm_sensors
     AmdRadeontop,
 }
 
